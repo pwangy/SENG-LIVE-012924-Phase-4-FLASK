@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
 
-class Production(db.Model):
+class Production(db.Model, SerializerMixin):
     __tablename__ = "productions"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -16,9 +17,14 @@ class Production(db.Model):
     ongoing = db.Column(db.Boolean)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
-    
-    crew_members = db.relationship("CrewMember", back_populates="production")
-    
+
+    crew_members = db.relationship(
+        "CrewMember", back_populates="production", cascade="all, delete-orphan"
+    )
+
+    # serialize_only = ("id", "title", "genre", "director", "description", "budget", "image", "ongoing")
+    serialize_rules = ("-crew_members.production",)
+
     def __repr__(self):
         return f"""
             <Production #{self.id}:
@@ -31,31 +37,23 @@ class Production(db.Model):
                 Ongoing: {self.ongoing}
             />
         """
-    
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "genre": self.genre,
-            "director": self.director,
-            "budget": self.budget,
-            "image": self.image,
-            "ongoing": self.ongoing
-        }
 
 
-class CrewMember(db.Model):
+class CrewMember(db.Model, SerializerMixin):
     __tablename__ = "crew_members"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String)
-    production_id = db.Column(db.Integer, db.ForeignKey("productions.id"))
+    production_id = db.Column(
+        db.Integer, db.ForeignKey("productions.id", ondelete="CASCADE")
+    )
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     production = db.relationship("Production", back_populates="crew_members")
 
+    serialize_rules = ("-production.crew_members",)
     def __repr__(self):
         return f"""
             <CrewMember #{self.id}:
@@ -64,11 +62,3 @@ class CrewMember(db.Model):
                 Production Id: {self.production_id}
             />
         """
-        
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "role": self.role,
-            "production_id": self.production_id
-        }

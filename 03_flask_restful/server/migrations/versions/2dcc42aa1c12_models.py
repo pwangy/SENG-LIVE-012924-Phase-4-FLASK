@@ -1,8 +1,8 @@
-"""create Productions and CrewMembers
+"""models
 
-Revision ID: 07700a8f279d
+Revision ID: 2dcc42aa1c12
 Revises: 
-Create Date: 2024-04-01 12:01:55.955631
+Create Date: 2024-04-02 11:48:34.277350
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '07700a8f279d'
+revision = '2dcc42aa1c12'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -38,7 +38,7 @@ def upgrade():
     sa.Column('production_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['production_id'], ['productions.id'], ),
+    sa.ForeignKeyConstraint(['production_id'], ['productions.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

@@ -9,6 +9,8 @@ faker = "*"
 flask = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
+sqlalchemy-serializer = "*"
+flask-restful = "*"
 
 [dev-packages]
 
