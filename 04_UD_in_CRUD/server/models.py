@@ -40,7 +40,7 @@ class Production(db.Model, SerializerMixin):
             />
         """
 
-    @validates(["title", "director"])
+    @validates("title", "director")
     def validate_title_and_director(self, attr_name, attr_value):
         if not isinstance(attr_value, str):
             raise TypeError(f"{attr_name} must be of type str")

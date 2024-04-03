@@ -36,14 +36,25 @@ db.init_app(app)
 api = Api(app, prefix="/api/v1")
 
 
-
 @app.errorhandler(NotFound)
 def not_found(error):
     return {"error": error.description}, 404
 
 @app.before_request
 def before_request():
-    import ipdb; ipdb.set_trace()
+    #! calculate current time
+    #! set it on g
+    if request.endpoint == "productionbyid":
+        id = request.view_args.get("id")
+        prod = db.session.get(Production, id)
+        g.prod = prod
+
+@app.after_request
+def after_request():
+    #! calculate current time
+    #! subtrack current from g.original_time
+    #! add a response headers to point to the total time elapsed
+    pass
 
 @app.route("/")
 def welcome():
@@ -78,17 +89,36 @@ class Productions(Resource):
             db.session.add(prod)
             db.session.commit() #! db constraints will kick in here
             return prod.to_dict(), 201
-        except (IntegrityError, TypeError, AttributeError, Exception) as e:
+        except Exception as e:
             db.session.rollback()
-            return {"error": str(e)}, 422
+            return {"message": str(e)}, 422
 
 api.add_resource(Productions, "/productions")
 
 class ProductionById(Resource):
     def get(self, id):
-        if prod := db.session.get(Production, id):
-            return prod.to_dict(rules=("-crew_members",)), 200
-        return {"message": f"Could not find Production with id #{id}"}
+        if g.prod:
+            return g.prod.to_dict(rules=("-crew_members",)), 200
+        return {"message": f"Could not find Production with id #{id}"}, 404
+
+    def patch(self, id):
+        if g.prod:
+            try:
+                data = request.json #! extract data out of the request (json OR get_json())
+                for attr, value in data.items(): #! unpack dict keys and values to mass assign onto the object
+                    setattr(g.prod, attr, value)
+                db.session.commit()
+                return g.prod.to_dict(), 200
+            except Exception as e:
+                return {"message": str(e)}, 422
+        return {"message": f"Could not find Production with id #{id}"}, 404
+
+    def delete(self, id):
+        if g.prod:
+            db.session.delete(g.prod)
+            db.session.commit()
+            return "", 204
+        return {"message": f"Could not find Production with id #{id}"}, 404
 
 api.add_resource(ProductionById, "/productions/<int:id>")
 if __name__ == "__main__":
