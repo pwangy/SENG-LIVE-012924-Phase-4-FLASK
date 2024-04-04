@@ -1,10 +1,13 @@
 import  {useParams, useNavigate } from 'react-router-dom'
 import {useEffect, useState} from 'react'
 import styled from 'styled-components'
+import { useOutletContext } from 'react-router-dom'
 
-function ProductionDetail({handleEdit, deleteProduction}) {
+function ProductionDetail() {
   const [production, setProduction] = useState({crew_members:[]})
   const [error, setError] = useState(null)
+  const { handleEdit, deleteProduction } = useOutletContext()
+
   //Student Challenge: GET One 
   const params = useParams()
   const navigate = useNavigate()

@@ -1,13 +1,15 @@
 import React, {useState} from 'react'
 import styled from 'styled-components'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useFormik } from "formik"
 import * as yup from "yup"
 
 
 
-function ProductionFormEdit({updateProduction, production_edit}) {
+function ProductionFormEdit() {
   const navigate = useNavigate()
+  const { updateProduction, production_edit } = useOutletContext()
+
   const formSchema = yup.object().shape({
     title: yup.string().required("Must enter a title"),
     budget: yup.number().positive()

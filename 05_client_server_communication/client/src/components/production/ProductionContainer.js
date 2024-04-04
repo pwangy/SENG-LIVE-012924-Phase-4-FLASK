@@ -1,9 +1,9 @@
 import styled from 'styled-components'
 import ProductionCard from './ProductionCard'
+import { useOutletContext } from 'react-router-dom'
 
-
-function ProductionContainer({productions}) {
-
+function ProductionContainer() {
+    const { productions } = useOutletContext()
     return (
      <div>
          <Title><span>F</span>latIron Theater <span>C</span>ompany</Title>

@@ -34,7 +34,7 @@ function App() {
     <>
       <GlobalStyle />
       <Header handleEdit={handleEdit}/>
-      <Outlet context={{ addProduction, updateProduction, deleteProduction, productions, production_edit }} />
+      <Outlet context={{ addProduction, updateProduction, deleteProduction, productions, production_edit, handleEdit }} />
     </>
   )
 }

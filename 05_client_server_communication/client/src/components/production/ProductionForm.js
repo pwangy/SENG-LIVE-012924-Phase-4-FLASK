@@ -1,13 +1,15 @@
 import React, {useState} from 'react'
 import styled from 'styled-components'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+
 // 6.✅ Verify formik and yet have been added to our package.json dependencies 
   // import the useFormik hook from formik
   // import * as yup for yup
 
 
 
-function ProductionForm({addProduction}) {
+function ProductionForm() {
+  const { addProduction } = useOutletContext()
 
   const navigate = useNavigate()
   // 7.✅ Use yup to create client side validations
