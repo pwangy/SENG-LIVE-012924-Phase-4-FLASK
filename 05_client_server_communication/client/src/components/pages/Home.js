@@ -1,13 +1,16 @@
 import styled from 'styled-components'
 import ProductionContainer from '../production/ProductionContainer'
+// import { useOutletContext } from 'react-router-dom'
 
-function Home({productions}){
-    return(
+function Home(){
+
+  // const { productions } = useOutletContext()
+  return(
     <div>
         <Image /> 
-        <ProductionContainer productions={productions} />
+        <ProductionContainer />
     </div>
-    )
+  )
 }
 
 export default Home

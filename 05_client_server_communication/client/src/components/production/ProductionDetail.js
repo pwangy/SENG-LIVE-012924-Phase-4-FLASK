@@ -4,24 +4,45 @@ import styled from 'styled-components'
 import { useOutletContext } from 'react-router-dom'
 
 function ProductionDetail() {
-  const [production, setProduction] = useState({crew_members:[]})
+  const [production, setProduction] = useState()
   const [error, setError] = useState(null)
   const { handleEdit, deleteProduction } = useOutletContext()
 
   //Student Challenge: GET One 
-  const params = useParams()
+  const {productionId} = useParams()
   const navigate = useNavigate()
-  useEffect(()=>{
 
-  },[])
+  useEffect(()=>{
+    fetch(`/productions/${productionId}`)
+    .then(resp => {
+      if (resp.status === 200) {
+        return resp.json().then(setProduction)
+      }
+      return resp.json().then(errorObj => setError(errorObj.message))
+    })
+    .catch(setError)
+  }, [productionId]) //! deps
 
   const handleDelete = (production) => {
-
+    fetch(`/productions/${productionId}`, {
+      method: "DELETE"
+    })
+    .then(res => {
+      if (res.status === 204) {
+        deleteProduction(production)
+        navigate("/")
+      } else {
+        return res.json().then(errorObj => {debugger})
+      }
+    })
+    .catch(setError)
   }
 
   
-  const {id, title, genre, image,description, crew_members} = production 
   if(error) return <h2>{error}</h2>
+  if(!production) return <h2>Loading</h2>
+
+  const {id, title, genre, image,description, crew_members} = production 
   return (
       <CardDetail id={id}>
         <h1>{title}</h1>
@@ -33,7 +54,7 @@ function ProductionDetail() {
               <p>{description}</p>
               <h2>Cast Members</h2>
               <ul>
-                {crew_members.map(cast => <li>{`${cast.role} : ${cast.name}`}</li>)}
+            {crew_members && crew_members.map(cast => <li key={cast.id}>{`${cast.role} : ${cast.name}`}</li>)}
               </ul>
             </div>
             <img src={image} alt={title}/>

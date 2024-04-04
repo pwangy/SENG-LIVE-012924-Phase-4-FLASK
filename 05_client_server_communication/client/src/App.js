@@ -12,7 +12,17 @@ function App() {
   const navigate = useNavigate()
 
   //5.✅ GET Productions
-  
+  useEffect(() => {
+    fetch("/productions")
+    .then(resp => {
+      if (resp.status) { //! 200-299
+        return resp.json().then(setProductions)
+      }
+      return resp.json().then(errorObj => {debugger})
+    })
+    .catch(err => console.log(err))
+  }, []);
+
   // 6.✅ navigate to client/src/components/ProductionForm.js
 
   const addProduction = (production) => setProductions(productions => [...productions,production])

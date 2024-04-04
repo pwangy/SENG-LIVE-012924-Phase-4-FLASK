@@ -26,7 +26,7 @@ class ProductionSchema(ma.SQLAlchemyAutoSchema):
         ),
     )
     budget = fields.Float(
-        required=True, validate=validate.Range(min=0.99, max=500000000)
+        required=True, validate=validate.Range(min=0, max=500000000)
     )
 
     url = ma.Hyperlinks(

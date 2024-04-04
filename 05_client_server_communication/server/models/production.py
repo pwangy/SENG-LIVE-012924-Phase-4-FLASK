@@ -66,7 +66,7 @@ class Production(db.Model, SerializerMixin):
     def validate_budget(self, _, budget):
         if not isinstance(budget, float):
             raise TypeError("Budgets must be floats")
-        elif budget < 0 or budget > 10000000:
+        elif budget < 0 or budget > 500000000:
             raise ValueError(f"{budget} has to be a positive float under 10Millions")
         return budget
 

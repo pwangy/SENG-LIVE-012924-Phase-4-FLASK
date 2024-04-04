@@ -22,11 +22,11 @@ export const router = createBrowserRouter([
                 element: <ProductionForm />
             },
             {
-                path: "productions/:projectId/edit",
+                path: "productions/:productionId/edit",
                 element: <ProductionEdit />
             },
             {
-                path: "/productions/:projectId",
+                path: "/productions/:productionId",
                 element: <ProductionDetail />
             }
         ]
