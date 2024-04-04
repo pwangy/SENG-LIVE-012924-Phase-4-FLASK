@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 
-#! 📚 Review With Students:
-# API Fundamentals
-# MVC Architecture and Patterns / Best Practices
-# RESTful Routing
-# Serialization
-# Postman
-
 #! Set Up When starting from scratch:
 # In Terminal, `cd` into `server` and run the following:
 # export FLASK_APP=app.py
@@ -16,122 +9,19 @@
 # flask db upgrade
 # python seed.py
 
+#! External libraries imports
+from flask import request, g, render_template, make_response
+from time import time
+from flask_restful import Resource
+from werkzeug.exceptions import NotFound
 
-from flask import Flask, request, g, jsonify, render_template, make_response
-from sqlite3 import IntegrityError
-from flask_migrate import Migrate
-from flask_marshmallow import Marshmallow
-from models import db, Production, CrewMember
-from flask_restful import Api, Resource
-from werkzeug.exceptions import NotFound, InternalServerError, MethodNotAllowed
-from marshmallow import validates, ValidationError, fields, validate
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///theater.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ECHO"] = True
+#! Internal imports
+from app_config import app, api, db
+from models.production import Production
+from models.crew_member import CrewMember
+from schemas.crew_member_schema import crew_member_schema, crew_members_schema
+from schemas.production_schema import production_schema, productions_schema
 
-# flask-migrate connection to app
-migrate = Migrate(app, db)
-# flask-sqlalchemy connection to app
-db.init_app(app)
-# flask-restful connection to app
-api = Api(app, prefix="/api/v1")
-# flask-marshmallow connection to app
-ma = Marshmallow(app)
-
-
-#! ==================
-#! Marshmallow Schemas
-class CrewMemberSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        # name of model
-        model = CrewMember
-        # avoid recreating objects on updates, only applies to deserialization (load())
-        # in order for this to work, flask-marshmallow (is specific to this wrapper)
-        # needs to know how an instance even looks like, note how we invoked load() on line 222
-        load_instance = True
-        #  if you set to True, Marshmallow will preserve the order of fields as defined in the schema.
-        ordered = True
-
-    #! Setup some app-level (aka no DB involved) validations
-    # * See more here https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html#module-marshmallow.validate
-    name = fields.String(required=True)
-    role = fields.String(
-        required=True,
-        validate=validate.Length(
-            min=3,
-            max=1000,
-            error="Role should be at least 3 chars long and 1000 chars max"
-        )
-    )
-    production_id = fields.Integer(required=True)
-    production = fields.Nested("ProductionSchema", exclude=("crew_members",))
-    #! Create hyperlinks for easy navigation of your api
-    url = ma.Hyperlinks(
-        {
-            "self": ma.URLFor("crewmemberbyid", values=dict(id="<id>")),
-            "collection": ma.URLFor("crewmembers"),
-        }
-    )
-
-    #! Example of custom validation with marshmallow
-    #! (DANGER -> VERY similar to the syntax in the models)
-    @validates("name")
-    def validate_word_count(self, name):
-        words = name.split()
-        if len(words) < 2:
-            raise ValidationError("Name must contain at least two words")
-
-
-#! Create schema for a single crew_member
-crew_member_schema = CrewMemberSchema()
-#! Create schema for a collection of crew_members
-# * Feel free to use only and exclude to customize
-crew_members_schema = CrewMemberSchema(many=True)
-
-
-class ProductionSchema(ma.SQLAlchemyAutoSchema):
-    #! The notes are the same as above in CrewMemberSchema ^^^
-    class Meta:
-        model = Production
-        load_instance = True
-
-    crew_members = fields.Nested(
-        "CrewMemberSchema",
-        only=("id", "name", "role"),
-        exclude=("production",),
-        many=True,
-    )
-    title = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    director = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    description = fields.String(
-        required=True, validate=validate.Length(min=30, max=500)
-    )
-    genre = fields.String(required=True, validate=validate.Length(min=2, max=50))
-    image = fields.String(
-        required=True,
-        validate=validate.Regexp(
-            r".*\.(jpeg|png|jpg)", error="File URI must be in JPEG, JPG, or PNG format"
-        ),
-    )
-    budget = fields.Float(
-        required=True, validate=validate.Range(min=0.99, max=500000000)
-    )
-
-    url = ma.Hyperlinks(
-        {
-            "self": ma.URLFor("productionbyid", values=dict(id="<id>")),
-            "collection": ma.URLFor("productions"),
-            # "crewmembers": ma.URLFor("crewmembers"),
-        }
-    )
-
-
-#! Create schema for a single crew_member
-production_schema = ProductionSchema()
-#! Create schema for a collection of crew_members
-# * Feel free to use only and exclude to customize
-productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
 
 #! ==================
 #! GENERAL ROUTE CONCERNS
@@ -139,27 +29,48 @@ productions_schema = ProductionSchema(many=True, exclude=("crew_members",))
 def not_found(error):
     return {"error": error.description}, 404
 
+
 @app.before_request
 def before_request():
+    #! First refactor when inserting crew routes BUT not very DRY right?
+    # if request.endpoint == "productionbyid":
+    #     id = request.view_args.get("id")
+    #     prod = db.session.get(Production, id)
+    #     g.prod = prod
+    # elif request.endpoint == "crewmemberbyid":
+    #     id = request.view_args.get("id")
+    #     crew = db.session.get(CrewMember, id)
+    #     g.crew = crew
+
+    #! Better Approach
+    path_dict = {"productionbyid": Production, "crewmemberbyid": CrewMember}
+    if request.endpoint in path_dict:
+        id = request.view_args.get("id")
+        record = db.session.get(path_dict.get(request.endpoint), id)
+        key_name = "prod" if request.endpoint == "productionbyid" else "crew"
+        setattr(g, key_name, record)
+    #   prod = db.session.get(Production, id)
+    #   g.prod = prod
     #! calculate current time
     #! set it on g
-    if request.endpoint == "productionbyid":
-        id = request.view_args.get("id")
-        prod = db.session.get(Production, id)
-        g.prod = prod
+    g.time = time()
 
-# @app.after_request
-# def after_request():
-#     #! calculate current time
-#     #! subtrack current from g.original_time
-#     #! add a response headers to point to the total time elapsed
-#     pass
+
+@app.after_request
+def after_request(response):  #! notice the response argument automatically passsed in
+    diff = time() - g.time
+    print(f"Request took {diff} seconds")
+    response.headers["X-Response-Time"] = str(diff)
+    return response
+
 
 #!======================
 #! API ROUTES
 @app.route("/")
 def welcome():
     return render_template("home.html", name="Matteo")
+
+
 class Productions(Resource):
     def get(self):
         try:
@@ -188,19 +99,23 @@ class Productions(Resource):
 
     def post(self):
         try:
-            data = request.get_json() #! to jsonify data a Content-Type headers has to be set on the requester side of things
+            data = (
+                request.get_json()
+            )  #! to jsonify data a Content-Type headers has to be set on the requester side of things
             # prod = Production(**data) #! Pre-marshmallow: model validations will kick in here
             prod = production_schema.load(
                 data
             )  #! marshmallow: marshmallow first and then model validations will kick in here
             db.session.add(prod)
-            db.session.commit() #! db constraints will kick in here
+            db.session.commit()  #! db constraints will kick in here
             return production_schema.dump(prod), 201
         except Exception as e:
             db.session.rollback()
             return {"message": str(e)}, 422
 
+
 api.add_resource(Productions, "/productions")
+
 
 class ProductionById(Resource):
     def get(self, id):
@@ -219,14 +134,18 @@ class ProductionById(Resource):
                 # db.session.commit()
                 # return g.prod.to_dict(), 200
                 #! Marshmallow refactor of patch
-                data = request.json #! extract data out of the request (json OR get_json())
+                data = (
+                    request.json
+                )  #! extract data out of the request (json OR get_json())
                 # * partial = True allows partial updates, meaning only the provided fields
                 # * in the JSON data will be updated, and the rest will remain unchanged.
                 # * Remember what we said about passing the instance to load() in order
                 # * for marshmallow to reuse an existing object rather than recreating one?
-                updated_prod = production_schema.load(data, instance=g.prod, partial=True)
+                updated_prod = production_schema.load(
+                    data, instance=g.prod, partial=True
+                )
                 db.session.commit()
-                return production_schema.dump(updated_prod), 200 #! or 202 (accepted)
+                return production_schema.dump(updated_prod), 200  #! or 202 (accepted)
             except Exception as e:
                 db.session.rollback()
                 return {"message": str(e)}, 422
@@ -240,6 +159,68 @@ class ProductionById(Resource):
             return "", 204
         return {"message": f"Could not find Production with id #{id}"}, 404
 
+
 api.add_resource(ProductionById, "/productions/<int:id>")
+
+
+class CrewMembers(Resource):
+    def get(self):
+        try:
+            serialized_crew = crew_members_schema.dump(CrewMember.query)
+            return serialized_crew, 200
+        except Exception as e:
+            return str(e), 400
+
+    def post(self):
+        try:
+            data = (
+                request.get_json()
+            )  #! to jsonify data a Content-Type headers has to be set on the requester side of things
+            crew = crew_member_schema.load(
+                data
+            )  #! marshmallow: marshmallow first and then model validations will kick in here
+            db.session.add(crew)
+            db.session.commit()  #! db constraints will kick in here
+            return crew_member_schema.dump(crew), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"message": str(e)}, 422
+
+
+api.add_resource(CrewMembers, "/crew-members")
+
+
+class CrewMemberById(Resource):
+    def get(self, id):
+        if g.crew:
+            return crew_member_schema.dump(g.crew), 200
+        return {"message": f"Could not find CrewMember with id #{id}"}, 404
+
+    def patch(self, id):
+        if g.crew:
+            try:
+                data = (
+                    request.json
+                )  #! extract data out of the request (json OR get_json())
+                updated_crew = crew_member_schema.load(
+                    data, instance=g.crew, partial=True
+                )
+                db.session.commit()
+                return crew_member_schema.dump(updated_crew), 200  #! or 202 (accepted)
+            except Exception as e:
+                db.session.rollback()
+                return {"message": str(e)}, 422
+        return {"message": f"Could not find Production with id #{id}"}, 404
+
+    def delete(self, id):
+        #! NOT TOUCHED DURING THE MARSHMALLOW REFACTOR
+        if g.crew:
+            db.session.delete(g.crew)
+            db.session.commit()
+            return "", 204
+        return {"message": f"Could not find Production with id #{id}"}, 404
+
+
+api.add_resource(CrewMemberById, "/crew-members/<int:id>")
 if __name__ == "__main__":
     app.run(port=5555, debug=True)

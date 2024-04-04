@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from faker import Faker
 
-from app import app
-from models import db, Production, CrewMember
+from app_config import app
+from models.__init__ import db
+from models.production import Production
+from models.crew_member import CrewMember
 
 fake = Faker()
 
