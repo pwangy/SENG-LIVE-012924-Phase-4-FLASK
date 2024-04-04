@@ -49,8 +49,7 @@ def before_request():
         record = db.session.get(path_dict.get(request.endpoint), id)
         key_name = "prod" if request.endpoint == "productionbyid" else "crew"
         setattr(g, key_name, record)
-    #   prod = db.session.get(Production, id)
-    #   g.prod = prod
+
     #! calculate current time
     #! set it on g
     g.time = time()
