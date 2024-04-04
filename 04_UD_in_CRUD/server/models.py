@@ -129,7 +129,7 @@ class CrewMember(db.Model, SerializerMixin):
     def validate_role(self, _, role):
         if not isinstance(role, str):
             raise TypeError("Roles must be strings")
-        elif len(role) < 2:
+        elif len(role) < 3:
             raise ValueError(f"{role} has to be at least 3 characters long")
         return role
 

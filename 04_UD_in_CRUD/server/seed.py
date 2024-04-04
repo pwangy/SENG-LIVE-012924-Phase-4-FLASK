@@ -96,3 +96,5 @@ with app.app_context():
     ]
     db.session.add_all(hamilton_crew_members)
     db.session.commit()
+
+
