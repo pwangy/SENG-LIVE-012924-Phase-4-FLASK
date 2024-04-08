@@ -10,6 +10,8 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String, nullable=False, unique=True)
     _password_hash = db.Column(db.String, nullable=False)
 
+    serialize_rules = ("-_password_hash",)
+
     @hybrid_property
     def password_hash(self):
         raise AttributeError("Passwords cannot be inspected after being setup!")

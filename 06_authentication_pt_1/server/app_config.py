@@ -25,6 +25,6 @@ api = Api(app, prefix="/api/v1")
 # flask-marshmallow connection to app
 ma = Marshmallow(app)
 # flask-session
-# session = Session(app)
+session = Session(app)
 # session.app.session_interface.db.create_all()
 flask_bcrypt = Bcrypt(app)

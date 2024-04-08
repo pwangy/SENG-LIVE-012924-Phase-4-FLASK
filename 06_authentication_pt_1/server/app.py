@@ -19,6 +19,7 @@ from werkzeug.exceptions import NotFound
 from app_config import app, api, db
 from models.production import Production
 from models.crew_member import CrewMember
+from models.user import User
 from schemas.crew_member_schema import crew_member_schema, crew_members_schema
 from schemas.production_schema import production_schema, productions_schema
 
@@ -52,7 +53,6 @@ def before_request():
     #! calculate current time
     #! set it on g
     g.time = time()
-    session['user_id'] = 1
 
 
 @app.after_request
@@ -60,6 +60,7 @@ def after_request(response):  #! notice the response argument automatically pass
     diff = time() - g.time
     print(f"Request took {diff} seconds")
     response.headers["X-Response-Time"] = str(diff)
+    response.set_cookie("max-reads", "3")
     return response
 
 
@@ -91,7 +92,9 @@ class Productions(Resource):
             # ]
             #! Marshmallow code
             serialized_prods = productions_schema.dump(Production.query)
-            # return make_response(jsonify(serialized_prods), 200)
+            # resp = make_response((serialized_prods), 200, {"Content-Type": "application/json"})
+            # resp.set_cookie()
+            # return resp
             return serialized_prods, 200
         except Exception as e:
             return str(e), 400
@@ -221,5 +224,43 @@ class CrewMemberById(Resource):
 
 
 api.add_resource(CrewMemberById, "/crew-members/<int:id>")
+
+
+@app.route("/api/v1/signup", methods=["POST"])
+def signup():
+    try:
+        data = request.json
+        user = User(username=data.get("username"), email=data.get("email"))
+        user.password_hash = data.get("password")
+        db.session.add(user)
+        db.session.commit()
+        session["user_id"] = user.id
+        return user.to_dict(), 201
+    except Exception as e:
+        db.session.rollback()
+        return {"message": str(e)}, 422
+
+@app.route("/api/v1/login", methods=["POST"])
+def login():
+    try:
+        data = request.json #! we have username and password
+        user = User.query.filter_by(username=data.get("username")).first() #! returns user object or None
+        if user and user.authenticate(data.get("password")):
+            session["user_id"] = user.id
+            return user.to_dict(), 200
+        else:
+            return {"message": "Invalid Credentials"}, 422
+    except Exception as e:
+        return {"message": str(e)}, 422
+
+@app.route("/api/v1/logout", methods=["DELETE"])
+def logout():
+    try:
+        if "user_id" in session:
+            del session['user_id'] #! delete the entire key-value pair
+        return {}, 204
+    except Exception as e:
+        raise e
+
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
