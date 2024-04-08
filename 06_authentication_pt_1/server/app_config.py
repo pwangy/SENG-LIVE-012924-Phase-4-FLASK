@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_session import Session
+from flask_bcrypt import Bcrypt
 from os import environ
 
 app = Flask(__name__)
@@ -24,5 +25,6 @@ api = Api(app, prefix="/api/v1")
 # flask-marshmallow connection to app
 ma = Marshmallow(app)
 # flask-session
-session = Session(app)
+# session = Session(app)
 # session.app.session_interface.db.create_all()
+flask_bcrypt = Bcrypt(app)
