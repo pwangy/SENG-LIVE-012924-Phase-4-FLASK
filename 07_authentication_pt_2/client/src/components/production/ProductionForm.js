@@ -1,10 +1,10 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import styled from 'styled-components'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 
 import { object, string, number, date, bool } from 'yup';
 import { Formik } from 'formik';
-
+import toast from "react-hot-toast"
 // 7.✅ Use yup to create client side validations
 let productionSchema = object({
   title: string()
@@ -34,11 +34,17 @@ let productionSchema = object({
 
 
 function ProductionForm() {
-  const { addProduction } = useOutletContext()
+  const { addProduction, currentUser } = useOutletContext()
   const [backendError, setBackendError] = useState("");
 
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/registration")
+      toast.error("Access Denied, login required!")
+    } 
+  }, [currentUser, navigate]);
 
   // 9.✅ useFormik hook
 

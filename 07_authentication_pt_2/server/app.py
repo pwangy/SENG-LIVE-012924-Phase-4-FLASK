@@ -14,7 +14,7 @@ from flask import request, g, render_template, make_response, session
 from time import time
 from flask_restful import Resource
 from werkzeug.exceptions import NotFound
-
+from functools import wraps
 #! Internal imports
 from app_config import app, api, db
 from models.production import Production
@@ -53,7 +53,17 @@ def before_request():
     #! calculate current time
     #! set it on g
     g.time = time()
+    # if request.endpoint not in ['login', 'signup']:
+    #     if 'user_id' not in session:
+    #         return {"message": "Access Denied, please log in!"}, 422
 
+def login_required(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return {"message": "Access Denied, please log in!"}, 422
+        return func(*args, **kwargs)
+    return decorated_function
 
 @app.after_request
 def after_request(response):  #! notice the response argument automatically passsed in
@@ -72,6 +82,8 @@ def welcome():
 
 
 class Productions(Resource):
+
+    @login_required
     def get(self):
         try:
             #! Pre-marshmallow code
@@ -98,7 +110,7 @@ class Productions(Resource):
             return serialized_prods, 200
         except Exception as e:
             return str(e), 400
-
+    @login_required
     def post(self):
         try:
             data = (
@@ -244,7 +256,7 @@ def signup():
 def login():
     try:
         data = request.json #! we have username and password
-        user = User.query.filter_by(username=data.get("username")).first() #! returns user object or None
+        user = User.query.filter_by(email=data.get("email")).first() #! returns user object or None
         if user and user.authenticate(data.get("password")):
             session["user_id"] = user.id
             return user.to_dict(), 200
@@ -261,6 +273,15 @@ def logout():
         return {}, 204
     except Exception as e:
         raise e
+
+@app.route("/api/v1/me", methods=["GET"])
+def me():
+    #! check if we have a user_id key inside session
+    if "user_id" in session:
+        user = db.session.get(User, session.get("user_id"))
+        return user.to_dict(), 200
+    else:
+        return {"message": "Please log in"}, 400
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)

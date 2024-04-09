@@ -5,8 +5,10 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import {createGlobalStyle} from 'styled-components'
 import {useEffect, useState} from 'react'
 import Header from './components/navigation/Header'
+import toast, {Toaster} from 'react-hot-toast'
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
   const [productions, setProductions] = useState([])
   const [production_edit, setProductionEdit] = useState(false)
   const navigate = useNavigate()
@@ -15,14 +17,26 @@ function App() {
   useEffect(() => {
     fetch("/productions")
     .then(resp => {
-      if (resp.status) { //! 200-299
+      if (resp.ok) { //! 200-299
         return resp.json().then(setProductions)
       }
-      return resp.json().then(errorObj => {debugger})
+      return resp.json().then(errorObj => toast.error(errorObj.message))
     })
     .catch(err => console.log(err))
   }, []);
+  const updateCurrentUser = (user) => setCurrentUser(user)
 
+  useEffect(() => {
+    fetch("/me")
+    .then(resp => {
+      if (resp.ok) {
+        resp.json().then(updateCurrentUser)
+        
+      } else {
+        toast.error("Please log in")
+      }
+    })
+  }, []);
   // 6.✅ navigate to client/src/components/ProductionForm.js
 
   const addProduction = (production) => setProductions(productions => [...productions,production])
@@ -43,8 +57,9 @@ function App() {
   return (
     <>
       <GlobalStyle />
-      <Header handleEdit={handleEdit}/>
-      <Outlet context={{ addProduction, updateProduction, deleteProduction, productions, production_edit, handleEdit }} />
+      <Header currentUser={currentUser} handleEdit={handleEdit} updateCurrentUser={updateCurrentUser }/>
+      <div><Toaster /></div>
+      <Outlet context={{ addProduction, updateProduction, deleteProduction, productions, production_edit, handleEdit, updateCurrentUser, currentUser }} />
     </>
   )
 }
