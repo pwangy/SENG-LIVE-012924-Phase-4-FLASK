@@ -1,0 +1,25 @@
+Authentication and Authorization (backend)
+
+1. What are these?
+2. What options do I have for authentication? (sessions-based VS tokens-based)
+  a. What are sessions and cookies? (how to use cookies in Flask? -> response.set_cookies("name", value))
+3. Analyze in detail one of these options!
+    -> session['user_id] = user.id "LOGGING SOMEONE IN"
+    -> from flask import session  -> FRONTEND SESSION COOKIES hcwhvwvw.uagfigdifgi.iwdfiuwehfiu (the info stored in the session is ALSO in the cookie sent to the frontend)
+    -> import Session from flask_session  -> BACKEND SESSION COOKIES iysdgisdgyiyfiuweg
+
+What new features will we need to implement today to get auth setup in the backend?
+1. Models: User (Columns, rels)
+    a. Password Protection -> bcrypt (Provos & Mazières) => flask_bcrypt
+    b. hybrid_properties
+2. Set up the Session -> set up a session secret (REALLY A SECRET)
+3. Signin -> set up the session user_id if credentials are correct
+4. Signup -> validate data, create User, set up the session user_id
+5. Signout -> clear the session user_id
+
+
+Authentication and Authorization (frontend)
+1. Registration Form (Signup & Login with yup and formik)
+2. Store user object at the highest-level needed OR react context (useContext)
+3. Logout bttn added to the Header and conditionally displayed
+4. Check-session handler (useEffect) / route (backend)
