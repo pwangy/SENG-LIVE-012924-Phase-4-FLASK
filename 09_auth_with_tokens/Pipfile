@@ -18,6 +18,7 @@ flask-bcrypt = "*"
 flask-session = "*"
 cryptography = "*"
 requests = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 

@@ -2,6 +2,7 @@
 #! internal imports
 from models.crew_member import CrewMember
 from models.production import Production
+from models.user import User
 from app_config import ma
 
 #! external libraries imports
