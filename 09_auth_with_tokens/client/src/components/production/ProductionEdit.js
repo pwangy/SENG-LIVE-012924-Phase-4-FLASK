@@ -1,9 +1,8 @@
-import React, {useState} from 'react'
 import styled from 'styled-components'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useFormik } from "formik"
 import * as yup from "yup"
-
+import toast from 'react-hot-toast'
 
 
 function ProductionFormEdit() {
@@ -26,8 +25,29 @@ function ProductionFormEdit() {
             description: production_edit.description,
           },
           validationSchema: formSchema,
-          onSubmit: (values) => {
-           // 10.✅ Add a PATCH
+          onSubmit: (formData) => {
+            fetch(`/productions/${production_edit.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData),
+            })
+            .then(resp => {
+              if (resp.ok) {
+                return resp.json().then(patchedProduction => {
+                  updateProduction(patchedProduction)
+                  navigate(`/productions/${patchedProduction.id}`)
+                  return patchedProduction
+                })
+              }
+              return resp.json().then(errorObj => {
+                toast.error(errorObj.message)
+              })
+            })
+            .catch(error => {
+              toast.error(error.message)
+            })
           },
         })
 

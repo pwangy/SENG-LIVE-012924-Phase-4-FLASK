@@ -13,7 +13,6 @@ function App() {
   const [production_edit, setProductionEdit] = useState(false)
   const navigate = useNavigate()
 
-  //5.✅ GET Productions
   useEffect(() => {
     fetch("/productions")
     .then(resp => {
@@ -37,16 +36,9 @@ function App() {
       }
     })
   }, []);
-  // 6.✅ navigate to client/src/components/ProductionForm.js
 
   const addProduction = (production) => setProductions(productions => [...productions,production])
-  const updateProduction = (updated_production) => setProductions(productions => productions.map(production =>{
-    if(production.id === updated_production.id){
-      return updated_production
-    } else {
-      return production
-    }
-  } ))
+  const updateProduction = (updated_production) => setProductions(productions => productions.map(production => production.id === updated_production.id ? updated_production : production))
   const deleteProduction = (deleted_production) => setProductions(productions => productions.filter((production) => production.id !== deleted_production.id) )
 
   const handleEdit = (production) => {
