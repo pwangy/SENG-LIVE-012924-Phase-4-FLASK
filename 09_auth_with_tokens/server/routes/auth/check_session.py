@@ -2,8 +2,7 @@ from .. import (
     Resource,
     db,
     User,
-    user_schema,
-    session
+    user_schema
 )
 class CheckSession(Resource):
     def get(self):    
