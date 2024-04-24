@@ -6,6 +6,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         load_instance = True
+        exclude=("_password_hash",)
 
     username = fields.String(required=True, validate=validate.Length(min=2, max=50))
     email = fields.Email(required=True)

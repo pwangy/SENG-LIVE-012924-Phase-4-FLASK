@@ -6,7 +6,7 @@ from .. import (
 )
 
 class Login(Resource):
-    def get(self):
+    def post(self):
         try:
             data = request.json #! we have username and password
             user = User.query.filter_by(email=data.get("email")).first() #! returns user object or None

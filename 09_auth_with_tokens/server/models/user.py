@@ -41,6 +41,6 @@ class User(db.Model, SerializerMixin):
 
     @validates("email")
     def validate_email(self, key, email):
-        if not re.match(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$", email):
+        if not re.match(r"^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$", email):
             raise ValueError("Invalid email address")
         return email
