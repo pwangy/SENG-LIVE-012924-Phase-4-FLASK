@@ -44,8 +44,9 @@ const Registration = () => {
         initialValues,
         validationSchema: isLogin ? signinSchema : signupSchema,
         onSubmit: (formData) => {
+          // debugger
           const updatedValues = Object.assign({}, formData, {
-            password_hash: formData.get("password"),
+            password_hash: formData.password,
           });
           delete updatedValues.password;
             fetch(requestUrl, {

@@ -1,10 +1,4 @@
-from .. import (
-    request,
-    g,
-    Resource,
-    db,
-    production_schema
-)
+from .. import request, g, Resource, db, production_schema, jwt_required
 
 class ProductionById(Resource):
     def get(self, id):
@@ -33,6 +27,7 @@ class ProductionById(Resource):
                 return {"message": str(e)}, 422
         return {"message": f"Could not find Production with id #{id}"}, 404
 
+    @jwt_required()
     def delete(self, id):
         if g.prod:
             db.session.delete(g.prod)

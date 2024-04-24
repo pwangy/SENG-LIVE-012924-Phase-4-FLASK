@@ -12,7 +12,11 @@ function App() {
   const [productions, setProductions] = useState([])
   const [production_edit, setProductionEdit] = useState(false)
   const navigate = useNavigate()
-
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
   useEffect(() => {
     fetch("/productions")
     .then(resp => {
@@ -26,16 +30,35 @@ function App() {
   const updateCurrentUser = (user) => setCurrentUser(user)
 
   useEffect(() => {
-    fetch("/me")
+    fetch("/me", {
+      headers: {
+        // "credentials": "include",
+      'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+      },
+    })
     .then(resp => {
       if (resp.ok) {
         resp.json().then(updateCurrentUser)
         
       } else {
-        toast.error("Please log in")
+        fetch("/refresh", {
+          method: "POST",
+          headers: {
+            'X-CSRF-TOKEN': getCookie('csrf_refresh_token'),
+          }
+        })
+        .then(resp => {
+          if (resp.ok) {
+            resp.json().then(updateCurrentUser)
+          } else {
+            navigate("/registration")
+            toast.error("Please log in")
+          }
+        
+        })
       }
     })
-  }, []);
+  }, [navigate]);
 
   const addProduction = (production) => setProductions(productions => [...productions,production])
   const updateProduction = (updated_production) => setProductions(productions => productions.map(production => production.id === updated_production.id ? updated_production : production))
