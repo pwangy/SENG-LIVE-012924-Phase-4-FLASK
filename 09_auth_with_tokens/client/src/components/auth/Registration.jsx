@@ -44,24 +44,28 @@ const Registration = () => {
         initialValues,
         validationSchema: isLogin ? signinSchema : signupSchema,
         onSubmit: (formData) => {
+          const updatedValues = Object.assign({}, formData, {
+            password_hash: formData.get("password"),
+          });
+          delete updatedValues.password;
             fetch(requestUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(resp => {
-                if (resp.ok) {
-                    resp.json()
-                    .then(updateCurrentUser)
-                    .then(() => navigate("/"))
-                } else {
-                    return resp
-                    .json()
-                    .then((errorObj) => toast.error(errorObj.message));
-                }
-            })
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(updatedValues),
+            }).then((resp) => {
+              if (resp.ok) {
+                resp
+                  .json()
+                  .then(updateCurrentUser)
+                  .then(() => navigate("/"));
+              } else {
+                return resp
+                  .json()
+                  .then((errorObj) => toast.error(errorObj.message));
+              }
+            });
         }
     })
 
