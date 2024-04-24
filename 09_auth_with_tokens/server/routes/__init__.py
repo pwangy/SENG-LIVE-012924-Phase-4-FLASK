@@ -9,7 +9,21 @@ from models.production import Production
 from models.crew_member import CrewMember
 from models.user import User
 from app_config import db, app
-
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    set_access_cookies,
+    set_refresh_cookies,
+    unset_jwt_cookies,
+    unset_refresh_cookies,
+    unset_access_cookies,
+    current_user,
+    get_jwt,
+    verify_jwt_in_request,
+    decode_token,
+)
 
 #! ==================
 #! GENERAL ROUTE CONCERNS
