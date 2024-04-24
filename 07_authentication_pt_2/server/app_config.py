@@ -20,6 +20,7 @@ db = SQLAlchemy(app)
 app.config["SESSION_SQLALCHEMY"] = db
 # flask-migrate connection to app
 migrate = Migrate(app, db)
+
 # flask-restful connection to app
 api = Api(app, prefix="/api/v1")
 # flask-marshmallow connection to app
